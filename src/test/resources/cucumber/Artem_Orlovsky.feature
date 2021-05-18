@@ -36,4 +36,4 @@ Feature: website Epam test
     Given I have entered site epam.com
     And I switch location to Ukraine
     When I go to company's contacts
-    Then I should be able to mail to "ua_career@epam.com" by click
+    Then I should be able to mail to email by click

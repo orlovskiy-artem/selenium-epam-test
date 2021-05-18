@@ -5,19 +5,18 @@ import cucumber.annotation.en.And;
 import cucumber.annotation.en.Given;
 import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
-import cucumber.runtime.PendingException;
-import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import pages.EpamMainPage;
+import pages.EpamUaContactPage;
+import pages.EpamUaMainPage;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -29,7 +28,12 @@ public class SeleniumChecker {
     private static final String EPAM_URL_PRIVACY_POLICY = "https://www.epam.com/privacy-policy";
     private static final String EPAM_URL_FAQ = "https://investors.epam.com/investors/faq";
 
-    WebDriver driver = null;
+    private static final String EPAM_UA_SITE_TITLE = "EPAM Ukraine - найбільша ІТ-компанія в Україні | Вакансії";
+    private static final String EPAM_IN_SITE_TITLE = "Welcome to EPAM in India | Software Development, Design & Consulting";
+    private static final String EPAM_PRIVACY_POLICY_SITE_TITLE = "Privacy Policy";
+    private static final String EPAM_FAQ_SITE_TITLE = "FAQ | EPAM Systems";
+
+    WebDriver driver;
 
     @After()
     public void closeBrowser(){
@@ -42,93 +46,65 @@ public class SeleniumChecker {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--start-maximized");
         driver = new ChromeDriver(options);
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
         driver.navigate().to(EPAM_URL);
-        Thread.sleep(500);
     }
 
     @When("^I switch location to Ukraine$")
-    public void iSwitchLocationToUkraine() throws InterruptedException {
-        driver.findElement(
-                By.className("location-selector__button"))
-                .click();
-        Thread.sleep(500);
-        driver.findElement(
-                By.cssSelector("a[href=\"https://careers.epam.ua\"]"))
-                .click();
-        Thread.sleep(500);
+    public void iSwitchLocationToUkraine(){
+        EpamMainPage mainPage = new EpamMainPage(driver);
+        mainPage.switchLocationToUa();
     }
 
     @Then("^I should be redirected to https://careers\\.epam\\.ua/$")
-    public void iShouldBeRedirectedToHttpsCareersEpamUa() throws InterruptedException {
-        Thread.sleep(1000);
+    public void iShouldBeRedirectedToHttpsCareersEpamUa(){
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        wait.until(ExpectedConditions.titleContains(EPAM_UA_SITE_TITLE));
         String url = driver.getCurrentUrl();
         assertEquals(EPAM_URL_UA,url);
     }
 
-
     @When("^I switch location to India \\(English\\)$")
-    public void iSwitchLocationToIndiaEnglish() throws InterruptedException {
-        driver.findElement(
-                By.className("location-selector__button"))
-                .click();
-        Thread.sleep(500);
-        driver.findElement(
-                By.cssSelector("a[href=\"https://welcome.epam.in\"]"))
-                .click();
-        Thread.sleep(500);
+    public void iSwitchLocationToIndiaEnglish(){
+        EpamMainPage mainPage = new EpamMainPage(driver);
+        mainPage.switchToLocationIn();
     }
 
     @Then("^I should be redirected to https://welcome\\.epam\\.in/$")
-    public void iShouldBeRedirectedToHttpsWelcomeEpamIn() throws InterruptedException {
-        Thread.sleep(500);
+    public void iShouldBeRedirectedToHttpsWelcomeEpamIn() {
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        wait.until(ExpectedConditions.titleContains(EPAM_IN_SITE_TITLE));
         String url = driver.getCurrentUrl();
         assertEquals(EPAM_URL_IN,url);
     }
 
-
     @When("^I go to company's contacts$")
-    public void iGoToCompanySContacts() throws InterruptedException {
-        Thread.sleep(500);
-        Actions hover = new Actions(driver);
-        WebElement Elem_to_hover = driver.findElement(By.cssSelector("a[href=\"/company\"]"));
-        hover.moveToElement(Elem_to_hover).build().perform();
-        driver.findElement(
-                By.cssSelector("a[href=\"/company/contact\"]"))
-                .click();
-        Thread.sleep(500);
+    public void iGoToCompanySContacts() {
+        EpamUaMainPage uaMainPage = new EpamUaMainPage(driver);
+        uaMainPage.goToCompanyContacts();
     }
 
     @Then("^I should be able to call by click on phone number$")
     public void iShouldBeAbleToCallByClickOnPhoneNumber() {
-        List<WebElement> contactPhones = driver.findElements(
-                By.cssSelector("a[class=\"contact-details-reference__phone\"]"));
-        assertTrue(contactPhones.size()>0);
+        EpamUaContactPage uaContactPage = new EpamUaContactPage(driver);
+        assertTrue(uaContactPage.getPhonesElements().size()>0);
     }
 
-    @Then("^I should be able to mail to \"([^\"]*)\" by click$")
-    public void iShouldBeAbleToMailToByClick(String email) {
-        WebElement emailElement = driver.findElement(
-                By.xpath("//*[text()=\"" + email + "\"]"));
-        assertNotNull(emailElement);
+    @Then("^I should be able to mail to email by click$")
+    public void iShouldBeAbleToMailToByClick() {
+        EpamUaContactPage uaContactPage = new EpamUaContactPage(driver);
+        assertTrue(uaContactPage.getEmailElements().size()>0);
     }
 
     @And("^I go to education info for students$")
     public void iGoToEducationInfoForStudents() throws InterruptedException {
-        Thread.sleep(500);
-        Actions hover = new Actions(driver);
-        WebElement Elem_to_hover = driver
-                .findElement(By.cssSelector("a[href=\"/learning\"]"));
-        hover.moveToElement(Elem_to_hover).build().perform();
-        driver.findElement(
-                By.cssSelector("a[href=\"/learning/university-programs\"]"))
-                .click();
-        Thread.sleep(500);
+        EpamUaMainPage uaMainPage = new EpamUaMainPage(driver);
+        uaMainPage.goToUniversityPrograms();
     }
 
 
     @Then("^I should be redirected to https://training\\.epam\\.ua/$")
-    public void iShouldBeRedirectedToHttpsTrainingEpamUa() throws InterruptedException {
-        Thread.sleep(1000); // sleep until web site will be ready to interact with
+    public void iShouldBeRedirectedToHttpsTrainingEpamUa() {
         ArrayList<String> tabs = new ArrayList<String>(driver.getWindowHandles());
         driver.switchTo().window(tabs.get(1)); // To switch tabs, because new one opens
         String urlStr = driver.getCurrentUrl();
@@ -141,68 +117,53 @@ public class SeleniumChecker {
 
 
     @When("^I click on link in the first step to become junior$")
-    public void iClickOnLinkInTheFirstStepToBecomeJunior() throws InterruptedException {
-        Thread.sleep(500);
-        WebElement linkTraining = driver.findElement(
-                By.cssSelector("a[href=\"https://www.training.epam.ua/\"]"));
-        JavascriptExecutor executor = (JavascriptExecutor) driver;
-        executor.executeScript("arguments[0].click();", linkTraining);
-        Thread.sleep(500);
+    public void iClickOnLinkInTheFirstStepToBecomeJunior() {
+        EpamUaMainPage uaMainPage = new EpamUaMainPage(driver);
+        uaMainPage.goToTrainingWebsite();
     }
 
     @When("^I click on magnifier symbol$")
-    public void iClickOnMagnifierSymbol() throws InterruptedException {
-        Thread.sleep(500);
-        driver.findElement(
-                By.cssSelector("button[class=\"header-search__button header__icon\"]"))
-                .click();
-        Thread.sleep(500);
+    public void iClickOnMagnifierSymbol(){
+        EpamMainPage mainPage = new EpamMainPage(driver);
+        mainPage.openSearchArea();
     }
 
     @Then("^I should see search area$")
-    public void iShouldSeeSearchArea() throws InterruptedException {
-        WebElement searchButton = driver.findElement(
-                By.cssSelector("button[class=\"header-search__submit\"]"));
-        assertTrue(searchButton.isDisplayed());
+    public void iShouldSeeSearchArea() {
+        EpamMainPage mainPage = new EpamMainPage(driver);
+        assertTrue(mainPage.isSearchAreaDisplayed());
     }
 
     @When("^I press on contact us button$")
     public void iPressOnContactUsButton() throws InterruptedException {
-        driver.findElement(
-                By.xpath("//*[text()=\"CONTACT US\"]")).click();
-        Thread.sleep(500);
+        EpamMainPage mainPage = new EpamMainPage(driver);
+        mainPage.goToContactUs();
     }
 
     @When("^I press on link to read Privacy policy$")
     public void iPressOnLinkToReadPrivacyPolicy() throws InterruptedException {
-        WebElement privacyPolicyLink = driver.findElement(
-                By.cssSelector("a[href=\"" + EPAM_URL_PRIVACY_POLICY + "\"]"));
-        JavascriptExecutor executor = (JavascriptExecutor) driver;
-        executor.executeScript("arguments[0].click();", privacyPolicyLink);
-        Thread.sleep(500);
-
+        EpamMainPage mainPage = new EpamMainPage(driver);
+        mainPage.goToPrivacyPolicySite();
     }
 
     @Then("^I should be redirected to Privacy policy site$")
     public void iShouldBeRedirectedToPrivacyPolicySite() {
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        wait.until(ExpectedConditions.titleContains(EPAM_PRIVACY_POLICY_SITE_TITLE));
         String urlStr = driver.getCurrentUrl();
         assertEquals(EPAM_URL_PRIVACY_POLICY,urlStr);
     }
 
     @When("^I click on FAQ option$")
-    public void iClickOnFAQOption() throws InterruptedException {
-        Actions hover = new Actions(driver);
-        WebElement elemToHover = driver
-                .findElement(By.cssSelector("a[href=\"/about\"]"));
-        hover.moveToElement(elemToHover).build().perform();
-        driver.findElement(
-                By.cssSelector("a[href=\"/about/investors/faq\"]")).click();
-        Thread.sleep(500);
+    public void iClickOnFAQOption() {
+        EpamMainPage mainPage = new EpamMainPage(driver);
+        mainPage.goToFAQ();
     }
 
     @Then("^I should be redirected to page with FAQ$")
-    public void iShouldBeRedirectedToPageWithFAQ() throws InterruptedException {
-        Thread.sleep(500);
+    public void iShouldBeRedirectedToPageWithFAQ(){
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        wait.until(ExpectedConditions.titleContains(EPAM_FAQ_SITE_TITLE));
         String url = driver.getCurrentUrl();
         assertEquals(EPAM_URL_FAQ,url);
     }
