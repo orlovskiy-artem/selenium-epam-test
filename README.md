@@ -1,4 +1,4 @@
-#selenium-epam-test
+# selenium-epam-test
 To run tests, do this instructions:
 
 1) Clone this repo
